@@ -1,0 +1,31 @@
+<!DOCTYPE html>
+<html lang="es">
+<!-- todo ok -->
+<head>
+  <meta charset="UTF-8">
+  <title>Login</title>
+  <script>
+    function validar(e) {
+      const email = document.getElementsByName('f_email')[0].value.trim();
+      const pass  = document.getElementsByName('f_password')[0].value.trim();
+      if (!email || !pass) {
+        e.preventDefault();
+        alert('Rellena email y contraseña antes de iniciar sesión.');
+        return false;
+      }
+    }
+    window.addEventListener('DOMContentLoaded', () => {
+      document.getElementById('frm').addEventListener('submit', validar);
+    });
+  </script>
+</head>
+<body>
+  <h1>Login</h1>
+  <form id="frm" action="/login.php" method="post">
+    <input name="f_email" type="email" placeholder="e-mail"><br>
+    <input name="f_password" type="password" placeholder="Contraseña"><br>
+    <input type="submit" value="Iniciar sesión">
+  </form>
+  <p><a href="/main.php">Volver</a></p>
+</body>
+</html>

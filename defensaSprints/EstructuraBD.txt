@@ -1,0 +1,39 @@
+La estructura de la base de datos es la siguiente:
+
+tCanciones
+
+id INT(11), PK, AUTO_INCREMENT, NOT NULL
+
+titulo VARCHAR(100), NULL
+
+artista VARCHAR(100), NULL
+
+url_imagen VARCHAR(200), NULL
+
+
+
+tComentarios
+
+id INT(11), PK, AUTO_INCREMENT, NOT NULL
+
+comentario TEXT, NULL
+
+cancion_id INT(11), NULL → FK a tCanciones(id) ON DELETE CASCADE ON UPDATE CASCADE
+
+usuario_id INT(11), NULL (no tiene FK definida en el dump)
+
+fecha TIMESTAMP, NOT NULL, DEFAULT CURRENT_TIMESTAMP()
+
+
+
+tUsuarios
+
+id INT(11), PK, AUTO_INCREMENT, NOT NULL
+
+nombre VARCHAR(50), NULL
+
+apellidos VARCHAR(100), NULL
+
+email VARCHAR(200), NULL, UNIQUE
+
+contraseña VARCHAR(200), NULL 
