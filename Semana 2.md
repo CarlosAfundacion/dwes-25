@@ -474,6 +474,7 @@ JSON → Serializer → Modelo → Base de datos
 ```
 
 ### 7.1 Crear un objeto con serializer
+
 Añadir a `urls.py`:
 
 ```python
@@ -481,6 +482,9 @@ path('api/cursos/crear/', CursoCreateAPIView.as_view()),
 ```
 
 ```python
+
+En `serializers.py`, cambiar la asignación de fields a '__all__'
+
 class CursoCreateAPIView(APIView):
     def post(self, request):
         serializer = CursoSerializer(data=request.data)
