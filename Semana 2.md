@@ -324,6 +324,8 @@ Es decir, actúa como **puente** entre:
 Modelo Django ↔ Serializer ↔ JSON
 ```
 
+Para usar serializers tendremos que crear el archivo `serializers.py` dentro de la carpeta de nuestra app (la que contiene `models.py`, `views.py`y demás)
+
 📌 **Idea clave**
 
 > El serializer define **qué datos salen** y **qué datos entran** en la API.
@@ -443,6 +445,11 @@ class CursoListAPIView(APIView):
 ---
 
 ## 6. Serializar un objeto individual (GET por id)
+Añadir a `urls.py`:
+
+```python
+path('api/cursos/<int:pk>/', CursoDetailAPIView.as_view()),
+```
 
 ```python
 class CursoDetailAPIView(APIView):
@@ -467,6 +474,11 @@ JSON → Serializer → Modelo → Base de datos
 ```
 
 ### 7.1 Crear un objeto con serializer
+Añadir a `urls.py`:
+
+```python
+path('api/cursos/crear/', CursoCreateAPIView.as_view()),
+```
 
 ```python
 class CursoCreateAPIView(APIView):
