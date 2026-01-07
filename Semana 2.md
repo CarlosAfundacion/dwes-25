@@ -75,7 +75,7 @@ INSTALLED_APPS = [
     'rest_framework',
 ]
 ```
-3.3 Configuración de CORS (Cross-Origin Resource Sharing)
+### 3.3 Configuración de CORS (Cross-Origin Resource Sharing)
 
 Este es un paso **obligatorio** para que nuestra API sea profesional. Por seguridad, los navegadores prohíben que una web (ej. una app en React o un simple `index.html`) haga peticiones a un servidor distinto al suyo. Si no configuramos esto, nuestra API solo funcionará en Postman, pero fallará cuando un Frontend intente usarla.
 
@@ -187,7 +187,7 @@ class CursoListAPIView(APIView):
 
 ```python
 from django.urls import path
-from .views import CursoListAPIView
+from cursos.views import CursoListAPIView
 
 urlpatterns = [
     path('api/cursos/', CursoListAPIView.as_view()),
