@@ -432,7 +432,7 @@ from .serializers import CursoSerializer
 class CursoListAPIView(APIView):
     def get(self, request):
         cursos = Curso.objects.all()
-        serializer = CursoSerializer(cursos, many=True)
+        serializer = CursoSerializer(cursos, many=True)# many = true indica que es una lista, no un único elemento
         return Response(serializer.data)
 ```
 
@@ -480,10 +480,9 @@ Añadir a `urls.py`:
 ```python
 path('api/cursos/crear/', CursoCreateAPIView.as_view()),
 ```
+En `serializers.py`, cambiar la asignación de fields a '__all__'
 
 ```python
-
-En `serializers.py`, cambiar la asignación de fields a '__all__'
 
 class CursoCreateAPIView(APIView):
     def post(self, request):
