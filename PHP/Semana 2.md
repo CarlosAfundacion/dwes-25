@@ -1,4 +1,4 @@
-# SEEMANA 2
+# SEMANA 2
 
 # 📘 BLOQUE 1 – De vistas manuales a Django REST Framework
 
