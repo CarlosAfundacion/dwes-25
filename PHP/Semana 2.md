@@ -1,5 +1,6 @@
 # SEMANA 2
 
+---
 #  BLOQUE 1 – De vistas manuales a Django REST Framework
 
 ---
@@ -240,26 +241,43 @@ En este bloque:
 
 #  PRÁCTICA
 
-**Objetivo**: integrar DRF y crear 1 endpoint con `APIView` que liste un recurso del proyecto.
+**Objetivo**
+Integrar Django REST Framework y crear **dos endpoints GET y uno POST** equivalentes a los del sprint anterior de Django, utilizando **APIView**.
 
-**Pasos**
+---
 
-1. Instala DRF: `pip install djangorestframework`
+### Pasos
+
+1. Instala Django REST Framework:
+
+   ```bash
+   pip install djangorestframework
+   ```
 2. Añade `"rest_framework"` a `INSTALLED_APPS`.
-3. Instala y configura CORS.
-4. Elige un recurso principal del proyecto (por ejemplo: `Libro`, `Producto`, `Equipo`, etc.).
-5. Crea una vista `APIView` con `get()`:
+3. Instala y configura **CORS** para permitir peticiones desde un frontend.
+4. Elige un **recurso principal** de tu proyecto
+   (por ejemplo: `Libro`, `Producto`, `Equipo`, `Curso`, etc.).
+5. Crea las vistas usando **APIView**:
 
-   * consulta ORM: `Modelo.objects.all()`
-   * construye lista de diccionarios a mano con 3–5 campos
-   * devuelve `Response(lista)`
-6. Crea la ruta en `urls.py` (`/api/<recurso>/`).
-7. Prueba en Postman
+   * GET lista → devuelve todos los elementos del recurso
+   * GET detalle → devuelve un único elemento por `id`
+   * POST → crea un nuevo elemento
+6. Define las rutas en `urls.py`:
+
+   * `/api/<recurso>/` → GET (lista) y POST (crear)
+   * `/api/<recurso>/<int:pk>/` → GET (detalle)
+7. Prueba todos los endpoints en **Postman**:
+
+   * Comprueba códigos de estado
+   * Comprueba estructura del JSON
+
+---
 
 ### Restricciones
 
-* No copiar el ejemplo tal cual
-*  Adaptarlo a su dominio (biblioteca, tienda, liga, etc.)
+*  No copiar el ejemplo visto en clase
+*  Adaptar la práctica a tu dominio
+  (biblioteca, tienda, liga, etc.)
 
 ---
 
@@ -867,3 +885,8 @@ En este bloque hemos aprendido a:
 
 
 ---
+
+
+
+
+
