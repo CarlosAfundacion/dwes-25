@@ -1,6 +1,6 @@
 # SEMANA 2
 
-# 📘 BLOQUE 1 – De vistas manuales a Django REST Framework
+#  BLOQUE 1 – De vistas manuales a Django REST Framework
 
 ---
 
@@ -29,7 +29,7 @@ En proyectos reales, Django se utiliza junto con **Django REST Framework (DRF)**
 * Vistas especializadas para APIs
 * Respuestas HTTP estandarizadas
 
-📌 **Objetivo del bloque**
+ **Objetivo del bloque**
 Aprender a **reemplazar** las vistas manuales por vistas REST profesionales **sin cambiar los modelos**.
 
 ---
@@ -51,7 +51,7 @@ DRF **no sustituye a Django**, sino que:
 * Usa el mismo ORM
 * Usa el mismo sistema de URLs
 
-👉 Lo que cambia es **cómo se escriben las vistas**.
+ Lo que cambia es **cómo se escriben las vistas**.
 
 ---
 
@@ -200,30 +200,13 @@ urlpatterns = [
 * Respuesta REST estándar
 * Preparación para serializadores
 
-📌 **Importante**:
+ **Importante**:
 Seguimos construyendo JSON manualmente **a propósito**.
 En el siguiente bloque veremos por qué esto no es suficiente.
 
 ---
 
-## 7. Uso de Postman para probar la API
-
-Una API **no se prueba solo con navegador**.
-
-### Qué comprobar en Postman
-
-* Método HTTP
-* URL correcta
-* Código de estado (200)
-* Estructura del JSON
-
-Ejemplo:
-
-* GET `http://localhost:8000/api/cursos/`
-
----
-
-## 8. Conectar DRF con modelos reales (ORM)
+## 7. Conectar DRF con modelos reales (ORM)
 
 DRF **no cambia nada del ORM**.
 
@@ -239,7 +222,7 @@ Lo único que cambia es **cómo devolvemos la respuesta**.
 
 ---
 
-## 9. Conclusión del bloque
+## 8. Conclusión del bloque
 
 En este bloque:
 
@@ -248,16 +231,16 @@ En este bloque:
 * Hemos creado un endpoint REST funcional
 * Hemos comprobado que el ORM sigue siendo el mismo
 
-⚠️ **Problema pendiente (intencionado):**
+ **Problema pendiente (intencionado):**
 
 * Seguimos construyendo JSON a mano
-  👉 Esto lo resolveremos con **serializadores** en el Bloque 2.
+   Esto lo resolveremos con **serializadores** en el Bloque 2.
 
 ---
 
-# 🧪 TRABAJO AUTÓNOMO DEL ALUMNADO
+#  PRÁCTICA
 
-**Objetivo**: integrar DRF y crear 1 endpoint con `APIView` que liste un recurso del proyecto, aún **sin serializadores**.
+**Objetivo**: integrar DRF y crear 1 endpoint con `APIView` que liste un recurso del proyecto.
 
 **Pasos**
 
@@ -275,13 +258,12 @@ En este bloque:
 
 ### Restricciones
 
-* ❌ No usar serializadores todavía
-* ❌ No copiar el ejemplo tal cual
-* ✔️ Adaptarlo a su dominio (biblioteca, tienda, liga, etc.)
+* No copiar el ejemplo tal cual
+*  Adaptarlo a su dominio (biblioteca, tienda, liga, etc.)
 
 ---
 
-# 📘 BLOQUE 2 – Serializadores y validación de datos en Django REST Framework
+#  BLOQUE 2 – Serializadores y validación de datos en Django REST Framework
 
 ---
 
@@ -326,7 +308,7 @@ Modelo Django ↔ Serializer ↔ JSON
 
 Para usar serializers tendremos que crear el archivo `serializers.py` dentro de la carpeta de nuestra app (la que contiene `models.py`, `views.py`y demás)
 
-📌 **Idea clave**
+**Idea clave**
 
 > El serializer define **qué datos salen** y **qué datos entran** en la API.
 
@@ -348,7 +330,7 @@ class CursoSerializer(serializers.Serializer):
     precio = serializers.DecimalField(max_digits=6, decimal_places=2)
 ```
 
-🔴 **No lo usaremos de momento**, porque:
+**No lo usaremos de momento**, porque:
 
 * Requiere mucho código
 * Repite información que ya está en el modelo
@@ -371,9 +353,9 @@ class CursoSerializer(serializers.ModelSerializer):
         fields = '__all__'
 ```
 
-✔️ Es el más usado
-✔️ Es el más productivo
-✔️ Es el estándar en empresa
+ Es el más usado
+ Es el más productivo
+ Es el estándar en empresa
 
 ---
 
@@ -412,7 +394,7 @@ class CursoSerializer(serializers.ModelSerializer):
         }
 ```
 
-📌 **Buena práctica**
+ **Buena práctica**
 No usar siempre `__all__`. Expón solo lo necesario.
 
 ---
@@ -459,7 +441,7 @@ class CursoDetailAPIView(APIView):
         return Response(serializer.data)
 ```
 
-📌 **Resultado**
+ **Resultado**
 
 > Mismo resultado que antes, pero con menos código y más control.
 
@@ -511,7 +493,7 @@ Ejemplo:
 * Enviar un string donde se espera un número
 * Omitir un campo obligatorio
 
-👉 DRF devuelve:
+ DRF devuelve:
 
 * Código **400**
 * Mensajes claros de error en JSON
@@ -553,11 +535,11 @@ def validate(self, data):
 
 Un serializer:
 
-* ❌ No accede directamente a la BD
-* ❌ No decide qué endpoint existe
-* ❌ No controla permisos
+*  No accede directamente a la BD
+*  No decide qué endpoint existe
+*  No controla permisos
 
-👉 Solo se encarga de **datos y validación**.
+ Solo se encarga de **datos y validación**.
 
 ---
 
@@ -571,13 +553,13 @@ En este bloque hemos aprendido a:
 * Validar automáticamente
 * Validar reglas de negocio
 
-📌 **Resultado clave**
+**Resultado clave**
 
 > Nuestra API ya no construye JSON a mano.
 
 ---
 
-# 🧪 TRABAJO AUTÓNOMO DEL ALUMNADO
+# PRÁCTICA
 
 **Objetivo**: dejar de construir JSON manual y añadir GET lista + GET detalle + POST usando serializadores.
 
@@ -597,14 +579,13 @@ En este bloque hemos aprendido a:
      
 ### Restricciones
 
-* ❌ No JSON manual
-* ❌ No copiar el ejemplo
-* ✔️ Adaptar a su dominio
+* No copiar el ejemplo
+* Adapta a tu dominio
 
 ---
 
 
-# 📘 BLOQUE 3 – CRUD completo con vistas genéricas y ViewSets en DRF
+#  BLOQUE 3 – CRUD completo con vistas genéricas y ViewSets en DRF
 
 ---
 
@@ -639,7 +620,7 @@ class CursoListAPIView(APIView):
         return Response(serializer.errors, status=400)
 ```
 
-👉 **Esto funciona**, pero **DRF nos permite hacerlo mejor**.
+ **Esto funciona**, pero **DRF nos permite hacerlo mejor**.
 
 ---
 
@@ -681,7 +662,7 @@ class CursoListCreateAPIView(ListCreateAPIView):
     serializer_class = CursoSerializer
 ```
 
-📌 **Observa**
+ **Observa**
 No hay métodos `get()` ni `post()`.
 DRF se encarga de todo.
 
@@ -718,7 +699,7 @@ urlpatterns = [
 ]
 ```
 
-📌 **Resultado**
+ **Resultado**
 
 > CRUD completo con muy poco código.
 
@@ -731,7 +712,7 @@ urlpatterns = [
 * Código más legible
 * Patrón estándar de empresa
 
-👉 **Este es el enfoque más común en APIs REST con DRF.**
+ **Este es el enfoque más común en APIs REST con DRF.**
 
 ---
 
@@ -773,7 +754,7 @@ class CursoViewSet(ModelViewSet):
     serializer_class = CursoSerializer
 ```
 
-📌 **Con esto ya tenemos todo el CRUD**.
+ **Con esto ya tenemos todo el CRUD**.
 
 ---
 
@@ -825,29 +806,15 @@ Esto genera automáticamente:
 | Genéricas | Medio  | Alta          |
 | ViewSet   | Poco   | Muy alta      |
 
-📌 **En empresa**, lo más habitual es:
+ **En empresa**, lo más habitual es:
 
 * `ModelViewSet` + routers
 
 ---
 
-## 10. Uso con Postman
 
-Una vez definido el ViewSet:
 
-* No hay que cambiar nada en Postman
-* Solo usar los métodos HTTP adecuados
-
-Ejemplos:
-
-* GET `/api/cursos/`
-* POST `/api/cursos/`
-* PUT `/api/cursos/3/`
-* DELETE `/api/cursos/3/`
-
----
-
-## 11. Buenas prácticas en este bloque
+## 10. Buenas prácticas en este bloque
 
 * Un ViewSet por recurso
 * Serializadores separados
@@ -857,7 +824,7 @@ Ejemplos:
 
 ---
 
-## 12. Conclusión del bloque
+## 11. Conclusión del bloque
 
 En este bloque hemos aprendido a:
 
@@ -866,19 +833,19 @@ En este bloque hemos aprendido a:
 * Usar routers para generar URLs REST
 * Escribir código limpio y profesional
 
-📌 **Resultado clave**
+ **Resultado clave**
 
 > Nuestra API ya es completamente CRUD y escalable.
 
 ---
 
-# 🧪 TRABAJO AUTÓNOMO DEL ALUMNADO
+# PRÁCTICA
 
 **Objetivo**: implementar un CRUD completo de un recurso usando **ModelViewSet + Router**.
 
 **Pasos**
 
-1. Elige **un recurso principal** (p.ej. `Producto`, `Libro`, `Partido`…).
+1. Elige **dos recursos** (p.ej. `Producto`, `Libro`, `Partido`…).
 2. Asegúrate de tener su `ModelSerializer` funcionando (Bloque 2).
 3. Crea `views.py` con un `ModelViewSet`:
 
@@ -897,8 +864,6 @@ En este bloque hemos aprendido a:
    * `PATCH /api/recurso/1/`
    * `DELETE /api/recurso/1/`
      
-### Recomendación
 
-* Si hay tiempo, convertir un segundo recurso
 
 ---
