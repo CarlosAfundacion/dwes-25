@@ -105,6 +105,7 @@ pip install django-cors-headers
         ...
     ]
     ```
+En Django, el middleware es un componente intermedio que se ejecuta entre la petición HTTP que llega al servidor y la respuesta HTTP que se devuelve al cliente.
 
 3.  **Permitir el acceso (En desarrollo):**
     Añade esta línea al final del archivo para permitir que cualquier aplicación externa se conecte a tu API, en producción cambiaríamos el True por la ip del cliente:
