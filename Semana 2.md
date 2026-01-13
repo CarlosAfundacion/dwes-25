@@ -481,18 +481,34 @@ Añadir a `urls.py`:
 ```python
 path('api/cursos/crear/', CursoCreateAPIView.as_view()),
 ```
-En `serializers.py`, cambiar la asignación de fields a `'__all__'`  **SÓLO PARA QUE FUNCIONE, EN PRODUCCIÓN DEBERÍAMOS EXPONER SOLO LOS CAMPOS NECESARIOS**
+En `serializers.py`, añadir el siguiente código para permitir la asignación de etiquetas en el POST:
 
 ```python
+from rest_framework import serializers # Deberíamos tenerlo ya
+from .models import Curso, Etiqueta
 
+class CreateCursoSerializer(serializers.ModelSerializer):
+    etiquetas = serializers.PrimaryKeyRelatedField(
+        many=True,
+        queryset=Etiqueta.objects.all(),
+        required=False
+    )
+
+    class Meta:
+        model = Curso
+        fields = ["titulo", "descripcion", "categoria", "instructor",
+                  "precio", "fecha_inicio", "nivel", "activo", "etiquetas"]
+```
+
+En `views.py`añadir:
+
+```python
 class CursoCreateAPIView(APIView):
     def post(self, request):
-        serializer = CursoSerializer(data=request.data)
-
+        serializer = CreateCursoSerializer(data=request.data)
         if serializer.is_valid():
-            serializer.save()
-            return Response(serializer.data, status=201)
-
+            curso = serializer.save()   # aquí DRF ya puede asignar M2M
+            return Response(CursoSerializer(curso).data, status=201)
         return Response(serializer.errors, status=400)
 ```
 
@@ -526,11 +542,20 @@ Cuando las reglas de negocio no están en el modelo.
 ### 9.1 Validar un campo
 
 ```python
-class CursoSerializer(serializers.ModelSerializer):
+
+# Esta parte se mantiene igual
+class CreateCursoSerializer(serializers.ModelSerializer):
+    etiquetas = serializers.PrimaryKeyRelatedField(
+        many=True,
+        queryset=Etiqueta.objects.all(),
+        required=False
+    )
+
     class Meta:
         model = Curso
-        fields = ['titulo', 'precio']
-
+        fields = ["titulo", "descripcion", "categoria", "instructor",
+                  "precio", "fecha_inicio", "nivel", "activo", "etiquetas"]
+# Añadimos
     def validate_precio(self, value):
         if value < 0:
             raise serializers.ValidationError("El precio no puede ser negativo")
@@ -542,10 +567,28 @@ class CursoSerializer(serializers.ModelSerializer):
 ### 9.2 Validación global
 
 ```python
-def validate(self, data):
-    if data['precio'] == 0 and data['nivel'] == 'AVZ':
-        raise serializers.ValidationError("Un curso avanzado no puede ser gratuito")
-    return data
+
+# Esta parte se mantiene igual
+class CreateCursoSerializer(serializers.ModelSerializer):
+    etiquetas = serializers.PrimaryKeyRelatedField(
+        many=True,
+        queryset=Etiqueta.objects.all(),
+        required=False
+    )
+
+    class Meta:
+        model = Curso
+        fields = ["titulo", "descripcion", "categoria", "instructor",
+                  "precio", "fecha_inicio", "nivel", "activo", "etiquetas"
+    def validate_precio(self, value):
+        if value < 0:
+            raise serializers.ValidationError("El precio no puede ser negativo")
+        return value
+# Añadimos
+    def validate(self, data):
+        if data['precio'] == 0 and data['nivel'] == 'AVZ':
+           raise serializers.ValidationError("Un curso avanzado no puede ser gratuito")
+        return data
 ```
 
 ---
