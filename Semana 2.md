@@ -507,7 +507,7 @@ class CursoCreateAPIView(APIView):
     def post(self, request):
         serializer = CreateCursoSerializer(data=request.data)
         if serializer.is_valid():
-            curso = serializer.save()   # aquí DRF ya puede asignar M2M
+            curso = serializer.save()  
             return Response(CursoSerializer(curso).data, status=201)
         return Response(serializer.errors, status=400)
 ```
@@ -579,7 +579,7 @@ class CreateCursoSerializer(serializers.ModelSerializer):
     class Meta:
         model = Curso
         fields = ["titulo", "descripcion", "categoria", "instructor",
-                  "precio", "fecha_inicio", "nivel", "activo", "etiquetas"
+                  "precio", "fecha_inicio", "nivel", "activo", "etiquetas"]
     def validate_precio(self, value):
         if value < 0:
             raise serializers.ValidationError("El precio no puede ser negativo")
