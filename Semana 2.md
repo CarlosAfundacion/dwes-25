@@ -487,7 +487,7 @@ En `serializers.py`, añadir el siguiente código para permitir la asignación d
 from rest_framework import serializers # Deberíamos tenerlo ya
 from .models import Curso, Etiqueta
 
-class CreateCursoSerializer(serializers.ModelSerializer):
+class CursoCreateSerializer(serializers.ModelSerializer):
     etiquetas = serializers.PrimaryKeyRelatedField(
         many=True,
         queryset=Etiqueta.objects.all(),
@@ -505,7 +505,7 @@ En `views.py`añadir:
 ```python
 class CursoCreateAPIView(APIView):
     def post(self, request):
-        serializer = CreateCursoSerializer(data=request.data)
+        serializer = CursoCreateSerializer(data=request.data)
         if serializer.is_valid():
             curso = serializer.save()  
             return Response(CursoSerializer(curso).data, status=201)
@@ -544,7 +544,7 @@ Cuando las reglas de negocio no están en el modelo.
 ```python
 
 # Esta parte se mantiene igual
-class CreateCursoSerializer(serializers.ModelSerializer):
+class CursoCreateSerializer(serializers.ModelSerializer):
     etiquetas = serializers.PrimaryKeyRelatedField(
         many=True,
         queryset=Etiqueta.objects.all(),
@@ -569,7 +569,7 @@ class CreateCursoSerializer(serializers.ModelSerializer):
 ```python
 
 # Esta parte se mantiene igual
-class CreateCursoSerializer(serializers.ModelSerializer):
+class CursoCreateSerializer(serializers.ModelSerializer):
     etiquetas = serializers.PrimaryKeyRelatedField(
         many=True,
         queryset=Etiqueta.objects.all(),
