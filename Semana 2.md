@@ -481,7 +481,7 @@ Añadir a `urls.py`:
 ```python
 path('api/cursos/crear/', CursoCreateAPIView.as_view()),
 ```
-En `serializers.py`, cambiar la asignación de fields a `'__all__'`
+En `serializers.py`, cambiar la asignación de fields a `'__all__'`  **SÓLO PARA QUE FUNCIONE, EN PRODUCCIÓN DEBERÍAMOS EXPONER SOLO LOS CAMPOS NECESARIOS**
 
 ```python
 
