@@ -148,13 +148,13 @@ public class MainActivity extends AppCompatActivity {
 
 <img width="2006" height="1090" alt="imagen" src="https://github.com/user-attachments/assets/02a854cf-7722-4580-8c4c-cdafcd315517" />
 
-El archivo `res/navigation/nav_graph.xml` define:
-
 * Pantallas (destinos)
 * Conexiones (acciones)
 * Pantalla inicial (startDestination)
 
 ### 17.1 `nav_graph.xml` (Login → Register → Home)
+
+Tendremos que crear este archivo y ubicarlo en `res/navigation/nav_graph.xml`
 
 ```xml
 <?xml version="1.0" encoding="utf-8"?>
@@ -234,9 +234,9 @@ Ventajas:
 
 ---
 
-##  PRÁCTICA 4 — NAVEGACIÓN Y ESTRUCTURA (colocada donde toca)
+##  PRÁCTICA 4 — NAVEGACIÓN Y ESTRUCTURA
 
-**Incremental sobre Aula+ Lite (obligatoria)**
+**Incremental sobre Aula+ Lite**
 
 En este punto ya tienes: Activity contenedor, NavHost, grafo y navegación.
 
@@ -269,7 +269,7 @@ Convertir Aula+ Lite en una app con **flujo real de pantallas** sin usar Intents
 
 ### Código de ejemplo mínimo (LoginFragment “fake” para validar navegación)
 
-`ui/fragments/LoginFragment.java` (versión A3 “sin Firebase aún”):
+`ui/fragments/LoginFragment.java`
 
 ```java
 package com.example.aula.ui.fragments;
@@ -376,10 +376,12 @@ ui/fragments/
 Una pantalla de login no es binaria. Tiene estados:
 
 * Idle (esperando)
-  <img width="450" height="378" alt="imagen" src="https://github.com/user-attachments/assets/1476c172-5c72-4512-abf7-19edaed73159" />
+  
+  <img width="225" height="189" alt="imagen" src="https://github.com/user-attachments/assets/1476c172-5c72-4512-abf7-19edaed73159" />
 
 * Loading (autenticando)
- <img width="550" height="600" alt="imagen" src="https://github.com/user-attachments/assets/eb5abb6f-b9cf-4973-a845-856d7b988f3b" />
+  
+ <img width="225" height="300" alt="imagen" src="https://github.com/user-attachments/assets/eb5abb6f-b9cf-4973-a845-856d7b988f3b" />
 
 * Error (mensaje)
 * Success (navegar)
