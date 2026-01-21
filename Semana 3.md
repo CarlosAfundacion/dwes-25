@@ -397,6 +397,7 @@ Permite filtrar por:
 ---
 
 ## 4. Filtros avanzados con `FilterSet`
+Para usarlos crearemos el archivo `filters.py`
 
 ```python
 import django_filters
@@ -414,6 +415,13 @@ class CursoFilter(django_filters.FilterSet):
     class Meta:
         model = Curso
         fields = ['activo', 'nivel', 'categoria']
+```
+
+En el ViewSet en el que lo queramos usar lo enlazaremos de la siguiente manera:
+
+```python
+filter_backends = [DjangoFilterBackend]
+filterset_class = CursoFilter
 ```
 
 ---
