@@ -423,6 +423,14 @@ En el ViewSet en el que lo queramos usar lo enlazaremos de la siguiente manera:
 filter_backends = [DjangoFilterBackend]
 filterset_class = CursoFilter
 ```
+Si quisiésemos usar los filtros directamente en el ViewSet, en vez de crear una clase a parte, podríamos hacer lo siguiente:
+
+```python
+  filter_backends = [DjangoFilterBackend]
+  filterset_fields = {
+        "precio": ["gte", "lte"],          # en URL usarás precio__gte y precio__lte
+    }
+```
 
 ---
 
