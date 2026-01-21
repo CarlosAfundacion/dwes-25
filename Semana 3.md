@@ -344,39 +344,115 @@ Cada alumno debe:
 
 ---
 
-# BLOQUE 5 – Filtros, búsqueda, ordenación y paginación
 
----
+# BLOQUE 5 – Filtros, búsqueda, ordenación y paginación
 
 ## 1. Objetivo del bloque
 
-El objetivo de este bloque es aprender a **hacer usable y escalable una API**, permitiendo:
+El objetivo de este bloque es **hacer usable, eficiente y profesional una API REST**.
 
-* Filtrar resultados
-* Buscar por texto
-* Ordenar datos
-* Paginar respuestas
+Una API que devuelve siempre **todos los datos sin control**:
 
-Una API sin estos mecanismos **no es aceptable en un entorno profesional**.
+* No escala.
+* Consume más red de la necesaria.
+* Es difícil de usar desde frontend o aplicaciones móviles.
+* No cumple estándares profesionales.
+
+En este bloque aprenderás a:
+
+* **Filtrar resultados** por campos concretos.
+* **Buscar por texto** en uno o varios campos.
+* **Ordenar resultados** de forma flexible.
+* **Paginar respuestas** para no devolver listados gigantes.
+
+Estos mecanismos **no cambian las rutas**, solo modifican el comportamiento de las peticiones mediante **query parameters**.
 
 ---
 
-## 2. Query parameters
+## 2. Query parameters (parámetros de consulta)
 
-Los query parameters modifican el comportamiento de una petición sin cambiar la ruta.
+### 2.1. Qué son
 
-Ejemplos:
+Los *query parameters* son parámetros que se añaden al final de la URL y permiten **personalizar una petición** sin crear nuevas rutas.
 
-* `?activo=true`
-* `?search=python`
-* `?ordering=-precio`
-* `?page=2`
+Formato general:
+
+```
+/recurso/?parametro=valor
+```
+
+Ejemplos habituales:
+
+* `?activo=true` → filtrar
+* `?search=python` → búsqueda
+* `?ordering=-precio` → ordenación
+* `?page=2` → paginación
+
+### 2.2. Ventajas
+
+* Mantienen una API limpia (menos endpoints).
+* Son fácilmente combinables.
+* Son estándar en REST.
+* Son fáciles de usar desde frontend, Postman o navegador.
+
+Ejemplo combinado:
+
+```
+/cursos/?activo=true&search=python&ordering=-precio&page=2
+```
 
 ---
 
 ## 3. Filtros por campos con `django-filter`
 
-Configuración básica en el ViewSet:
+### 3.1. Qué es `django-filter`
+
+`django-filter` es una librería que permite **convertir automáticamente parámetros de URL en filtros ORM**.
+
+DRF se integra con ella mediante un *filter backend*.
+
+### 3.2. Instalación (OBLIGATORIA para este bloque)
+
+Este bloque **sí requiere instalar una librería nueva**.
+
+```bash
+pip install django-filter
+```
+
+### 3.3. Activar `django-filter` en el proyecto
+
+#### A) Añadir a `INSTALLED_APPS`
+
+En `settings.py`:
+
+```python
+INSTALLED_APPS = [
+    ...
+    'django_filters',
+]
+```
+
+#### B) (Recomendado) Configuración global en DRF
+
+En `settings.py`:
+
+```python
+REST_FRAMEWORK = {
+    'DEFAULT_FILTER_BACKENDS': [
+        'django_filters.rest_framework.DjangoFilterBackend',
+    ]
+}
+```
+
+Esto evita tener que repetir el backend en todos los ViewSets (aunque puedes hacerlo a nivel local si lo prefieres).
+
+---
+
+## 4. Filtros simples por campos (`filterset_fields`)
+
+### 4.1. Configuración básica en un ViewSet
+
+En `views.py`:
 
 ```python
 from django_filters.rest_framework import DjangoFilterBackend
@@ -388,25 +464,70 @@ class CursoViewSet(ModelViewSet):
     filterset_fields = ['activo', 'nivel', 'categoria']
 ```
 
-Permite filtrar por:
+### 4.2. Qué permite este enfoque
 
-* Booleanos
-* Choices
-* Claves foráneas (por ID)
+Con esta configuración, DRF permite filtrar automáticamente por esos campos usando la URL:
+
+* `/cursos/?activo=true`
+* `/cursos/?nivel=basico`
+* `/cursos/?categoria=3`
+
+### 4.3. Tipos de campos soportados directamente
+
+Este enfoque es ideal para:
+
+* **Booleanos** (`True / False`)
+* **Choices** (campos con opciones limitadas)
+* **Claves foráneas** (filtrado por ID)
+
+No es adecuado cuando:
+
+* Necesitas rangos (`precio mínimo / máximo`)
+* Fechas
+* Comparaciones (`>=`, `<=`, etc.)
+* Lógica más compleja
+
+Para eso usamos **FilterSet**.
 
 ---
 
-## 4. Filtros avanzados con `FilterSet`
-Para usarlos crearemos el archivo `filters.py`
+## 5. Filtros avanzados con `FilterSet`
+
+### 5.1. Cuándo usar `FilterSet`
+
+Usa `FilterSet` cuando necesites:
+
+* Rangos numéricos.
+* Rangos de fechas.
+* Nombres de parámetros personalizados.
+* Mayor control sobre validación y comportamiento.
+
+### 5.2. Crear el archivo `filters.py`
+
+En tu app (por ejemplo `cursos/`), crea un nuevo archivo:
+
+```
+cursos/
+ ├── filters.py
+```
+
+Este archivo **no existe por defecto**, lo creas tú para centralizar los filtros avanzados.
+
+### 5.3. Definir un FilterSet
+
+En `filters.py`:
 
 ```python
 import django_filters
+from .models import Curso
 
 class CursoFilter(django_filters.FilterSet):
+
     precio_min = django_filters.NumberFilter(
         field_name="precio",
         lookup_expr="gte"
     )
+
     precio_max = django_filters.NumberFilter(
         field_name="precio",
         lookup_expr="lte"
@@ -417,203 +538,636 @@ class CursoFilter(django_filters.FilterSet):
         fields = ['activo', 'nivel', 'categoria']
 ```
 
-En el ViewSet en el que lo queramos usar lo enlazaremos de la siguiente manera:
+### 5.4. Explicación teórica importante
+
+* `field_name="precio"` → campo del modelo.
+* `lookup_expr="gte"` → operador ORM (`>=`).
+* `lookup_expr="lte"` → operador ORM (`<=`).
+
+Esto genera filtros como:
+
+* `?precio_min=50`
+* `?precio_max=200`
+
+Internamente, Django ejecuta:
 
 ```python
-filter_backends = [DjangoFilterBackend]
-filterset_class = CursoFilter
-```
-Si quisiésemos usar los filtros directamente en el ViewSet, en vez de crear una clase a parte, podríamos hacer lo siguiente:
-
-```python
-  filter_backends = [DjangoFilterBackend]
-  filterset_fields = {
-        "precio": ["gte", "lte"],          # en URL usarás precio__gte y precio__lte
-    }
+Curso.objects.filter(precio__gte=50)
 ```
 
 ---
 
-## 5. Búsqueda textual
+## 6. Enlazar el FilterSet al ViewSet
+
+En `views.py`:
+
+```python
+from django_filters.rest_framework import DjangoFilterBackend
+from .filters import CursoFilter
+
+class CursoViewSet(ModelViewSet):
+    queryset = Curso.objects.all()
+    serializer_class = CursoSerializer
+    filter_backends = [DjangoFilterBackend]
+    filterset_class = CursoFilter
+```
+
+### 6.1. Qué cambia respecto a `filterset_fields`
+
+* Ganas control total.
+* Puedes combinar filtros simples + avanzados.
+* Puedes documentar y mantener los filtros mejor.
+
+---
+
+## 7. Alternativa: filtros avanzados sin `filters.py`
+
+Para casos sencillos, puedes definir filtros avanzados directamente en el ViewSet:
+
+```python
+filter_backends = [DjangoFilterBackend]
+filterset_fields = {
+    "precio": ["gte", "lte"],
+}
+```
+
+Uso en URL:
+
+* `?precio__gte=50`
+* `?precio__lte=200`
+
+### Cuándo usar esta opción
+
+* Proyectos pequeños.
+* Filtros puntuales.
+* Cuando no quieres crear archivos extra.
+
+### Cuándo NO usarla
+
+* APIs medianas o grandes.
+* Cuando los filtros empiezan a crecer.
+* Cuando quieres parámetros más legibles (`precio_min`).
+
+---
+
+## 8. Búsqueda textual (`SearchFilter`)
+
+### 8.1. Qué problema resuelve
+
+La búsqueda textual permite encontrar resultados por **texto libre**, sin necesidad de filtros exactos.
+
+Ejemplo:
+
+```
+/cursos/?search=python
+```
+
+### 8.2. Activar búsqueda en un ViewSet
+
+En `views.py`:
 
 ```python
 from rest_framework.filters import SearchFilter
 
-search_fields = ['titulo', 'descripcion']
+class CursoViewSet(ModelViewSet):
+    ...
+    filter_backends = [DjangoFilterBackend, SearchFilter]
+    search_fields = ['titulo', 'descripcion']
 ```
 
-Opciones habituales:
+### 8.3. Características de la búsqueda
 
-* Búsqueda parcial
-* No distingue mayúsculas
-* Adecuada para texto libre
+* Coincidencias **parciales**.
+* **No distingue mayúsculas/minúsculas**.
+* Usa `icontains` internamente.
+* Ideal para texto descriptivo.
+
+### 8.4. Limitaciones
+
+* No es búsqueda semántica.
+* No sustituye a motores tipo Elasticsearch.
+* Perfecta para APIs educativas y proyectos medios.
 
 ---
 
-## 6. Ordenación de resultados
+## 9. Ordenación de resultados (`OrderingFilter`)
+
+### 9.1. Para qué sirve
+
+Permite al cliente decidir:
+
+* Por qué campo ordenar.
+* Si ascendente o descendente.
+
+### 9.2. Configuración en el ViewSet
 
 ```python
 from rest_framework.filters import OrderingFilter
 
-ordering_fields = ['precio', 'fecha_inicio']
-ordering = ['fecha_inicio']
+class CursoViewSet(ModelViewSet):
+    ...
+    filter_backends = [
+        DjangoFilterBackend,
+        SearchFilter,
+        OrderingFilter
+    ]
+    ordering_fields = ['precio', 'fecha_inicio']
+    ordering = ['fecha_inicio']
 ```
+
+### 9.3. Uso desde la URL
+
+* `?ordering=precio` → ascendente
+* `?ordering=-precio` → descendente
+* `?ordering=fecha_inicio`
+
+### 9.4. Buenas prácticas
+
+* Limita `ordering_fields` (no expongas todos).
+* Define un orden por defecto (`ordering`).
+* Evita ordenar por campos no indexados en grandes volúmenes.
 
 ---
 
-## 7. Paginación
+## 10. Paginación
 
-Configuración global recomendada:
+### 10.1. Por qué es obligatoria
+
+Sin paginación:
+
+* Respuestas enormes.
+* Más consumo de red.
+* Peor rendimiento.
+* Mala experiencia en frontend.
+
+### 10.2. Configuración global recomendada
+
+En `settings.py`:
 
 ```python
 REST_FRAMEWORK = {
-    'DEFAULT_PAGINATION_CLASS': 
+    'DEFAULT_PAGINATION_CLASS':
         'rest_framework.pagination.PageNumberPagination',
     'PAGE_SIZE': 5
 }
 ```
 
-Evita respuestas excesivas y mejora el rendimiento.
+### 10.3. Funcionamiento
+
+DRF devolverá respuestas como:
+
+```json
+{
+  "count": 42,
+  "next": "http://.../?page=2",
+  "previous": null,
+  "results": [
+    ...
+  ]
+}
+```
+
+### 10.4. Uso desde la URL
+
+* `?page=1`
+* `?page=2`
 
 ---
 
-## 8. Práctica
+## 11. Combinación de todos los mecanismos
 
-Cada alumno debe:
+Ejemplo real de URL completa:
 
-1. Activar en un recurso principal:
+```
+/cursos/?activo=true&search=python&ordering=-precio&precio_min=50&page=2
+```
 
-   * Filtros
-   * Búsqueda
-   * Ordenación
-   * Paginación
+DRF:
 
-2. Implementar al menos un filtro avanzado (rango o fechas)
+1. Filtra
+2. Busca
+3. Ordena
+4. Pagina
 
-3. Entregar:
+En ese orden.
 
-   * ViewSet actualizado
-   * FilterSet 
-   * Evidencias de funcionamiento
+---
+
+## 12. Práctica del bloque
+
+Cada alumno debe, en **su recurso principal** del proyecto:
+
+### 12.1. Implementar obligatoriamente
+
+* Filtros por campos simples.
+* Búsqueda textual.
+* Ordenación.
+* Paginación.
+
+### 12.2. Implementar al menos un filtro avanzado
+
+Ejemplos válidos:
+
+* Rango de precios.
+* Rango de fechas.
+* Cantidad mínima/máxima.
+* Duración mínima/máxima.
 
 ---
 
 ---
 
-# BLOQUE 6 – Endpoints de negocio y acciones personalizadas
 
----
+# BLOQUE 6 – Endpoints de negocio y acciones personalizadas (DRF)
 
 ## 1. Objetivo del bloque
 
-Aprender que una API real **no se limita al CRUD**, sino que debe representar **procesos de negocio**.
+En una API “real”, el CRUD (Create, Read, Update, Delete) suele ser solo la base. Las aplicaciones suelen necesitar **procesos**: inscribirse a un curso, confirmar una reserva, finalizar un pedido, publicar un artículo, etc.
+
+En este bloque vas a aprender a:
+
+* Representar **acciones** (no solo recursos) en una API REST.
+* Implementarlas con **ViewSets + @action** en Django REST Framework (DRF).
+* Validar datos de entrada con **serializadores no ligados a modelos** (Serializer “manual”).
+* Devolver respuestas y errores coherentes (códigos HTTP + mensajes).
+* Crear **acciones por objeto** (detail=True) y **acciones de colección** (detail=False).
 
 ---
 
 ## 2. Qué es un endpoint de negocio
 
-Es un endpoint que:
+### 2.1. CRUD vs negocio
 
-* Representa una acción
-* Ejecuta lógica
-* Puede afectar a varios modelos
-* Tiene un significado funcional
+Un endpoint CRUD “habla” de recursos:
 
-Ejemplos:
+* `GET /cursos/` → lista cursos
+* `POST /cursos/` → crea curso
+* `GET /cursos/{id}/` → detalle
+* `PUT/PATCH /cursos/{id}/` → actualiza
+* `DELETE /cursos/{id}/` → elimina
 
-* Inscribirse
-* Confirmar
-* Finalizar
-* Valorar
+Pero un endpoint de negocio “habla” de una **acción** con significado funcional:
+
+* `POST /cursos/{id}/inscribirse/` → “inscribirse en este curso”
+* `POST /pedidos/{id}/finalizar/` → “finalizar pedido”
+* `POST /reservas/{id}/confirmar/` → “confirmar reserva”
+* `POST /productos/{id}/valorar/` → “valorar producto”
+
+### 2.2. Características típicas
+
+Un endpoint de negocio suele:
+
+* Representar una **acción** (un verbo funcional).
+* Ejecutar **lógica** (validaciones, reglas, estados…).
+* Afectar a **uno o varios modelos** (crear relación, actualizar estado, registrar histórico…).
+* Tener un significado claro para el usuario: “inscripción correcta”, “ya inscrito”, etc.
+
+### 2.3. Diseño REST “pragmático”
+
+REST puro evita verbos en rutas, pero en APIs de negocio es habitual y aceptado usar acciones bien definidas, especialmente con DRF. Lo importante es:
+
+* Ruta coherente y predecible.
+* Método HTTP correcto (POST para acciones que cambian estado/crean algo, GET para consultas).
+* Respuestas claras y códigos adecuados.
 
 ---
 
 ## 3. Decorador `@action` en DRF
 
-Permite añadir rutas personalizadas a un ViewSet.
+### 3.1. Qué hace `@action`
 
-Parámetros principales:
+`@action` permite añadir **rutas extra** dentro de un `ViewSet`.
 
-* `detail=True` o `False`
-* `methods=['post']`
-* `url_path`
-* `permission_classes`
+Un `ModelViewSet` ya crea rutas CRUD automáticamente. Con `@action` le añades rutas como:
 
----
+* `POST /cursos/{id}/inscribirse/`
+* `GET /cursos/destacados/`
 
-## 4. Ejemplo completo de acción de negocio
+### 3.2. Dónde se usa
+
+Se usa dentro de un `ViewSet`:
 
 ```python
-@action(detail=True, methods=['post'])
-def inscribirse(self, request, pk=None):
-    curso = self.get_object()
-    estudiante_id = request.data.get('estudiante_id')
-
-    if not estudiante_id:
-        return Response(
-            {"error": "estudiante_id obligatorio"},
-            status=400
-        )
-
-    inscripcion, creada = Inscripcion.objects.get_or_create(
-        curso=curso,
-        estudiante_id=estudiante_id
-    )
-
-    if not creada:
-        return Response(
-            {"error": "ya inscrito"},
-            status=409
-        )
-
-    return Response(
-        {"mensaje": "inscripción correcta"},
-        status=201
-    )
+from rest_framework.decorators import action
+from rest_framework.response import Response
 ```
 
----
+### 3.3. Parámetros principales 
 
-## 5. Uso de serializadores de entrada
+#### `detail=True` o `detail=False`
+
+* `detail=True`: la acción es **sobre un objeto concreto** (requiere `{id}`).
+
+  * Ruta típica: `/cursos/5/inscribirse/`
+  * Dentro del método puedes usar `self.get_object()` para obtener el objeto.
+* `detail=False`: la acción es **sobre la colección** (no hay `{id}`).
+
+  * Ruta típica: `/cursos/destacados/`
+  * Sueles filtrar y devolver listas o estadísticas.
+
+#### `methods=[...]`
+
+Lista de métodos permitidos (en minúsculas):
+
+* `methods=['post']` para acciones que cambian estado o crean relaciones.
+* `methods=['get']` para consultas especiales.
+* Evita usar `GET` para acciones que **modifican** datos.
+
+#### `url_path='...'`
+
+* Por defecto, el nombre de la función es la ruta.
+
+  * `def inscribirse(...)` → `/inscribirse/`
+* Con `url_path` puedes forzar otro:
+
+  * `url_path='signup'` → `/signup/`
+
+#### `permission_classes=[...]`
+
+Permite cambiar permisos solo en esa acción (muy útil):
+
+* Que el CRUD sea público pero `inscribirse` requiera estar autenticado.
+* O que solo admins puedan ejecutar una acción.
+
+Ejemplo:
 
 ```python
+@action(detail=True, methods=['post'], permission_classes=[IsAuthenticated])
+def inscribirse(self, request, pk=None):
+    ...
+```
+
+> Nota: también existe `authentication_classes=[...]`, igual de útil si quieres un método de autenticación distinto para una acción concreta.
+
+#### `serializer_class=...` (muy importante)
+
+En acciones de negocio, a menudo necesitas un serializer de entrada distinto. Puedes:
+
+* Definir un serializer específico en la acción.
+* O hacer que `get_serializer_class()` devuelva uno u otro según `self.action`.
+
+---
+
+## 4. Preparación del proyecto para acciones de negocio
+
+**No se instala nada extra** para que `@action` funcione.
+
+---
+
+## 5. Ejemplo completo: Acción de negocio `inscribirse`
+
+### 5.1. Modelos mínimos implicados (contexto)
+
+Para que el ejemplo tenga sentido, suele haber:
+
+* `Curso`
+* `Inscripcion` (relación entre Curso y Estudiante/Usuario o un modelo Estudiante)
+
+**La lógica**: si un estudiante intenta inscribirse en un curso:
+
+* Si falta `estudiante_id` → 400
+* Si ya estaba inscrito → 409
+* Si se crea correctamente → 201
+
+### 5.2. Versión “directa” (como tu ejemplo)
+
+Dentro del `CursoViewSet`:
+
+```python
+from rest_framework.decorators import action
+from rest_framework.response import Response
+from rest_framework import status
+
+from .models import Curso, Inscripcion
+from .serializers import CursoSerializer
+
+class CursoViewSet(ModelViewSet):
+    queryset = Curso.objects.all()
+    serializer_class = CursoSerializer
+
+    @action(detail=True, methods=['post'])
+    def inscribirse(self, request, pk=None):
+        curso = self.get_object()
+        estudiante_id = request.data.get('estudiante_id')
+
+        if not estudiante_id:
+            return Response(
+                {"error": "estudiante_id obligatorio"},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+
+        inscripcion, creada = Inscripcion.objects.get_or_create(
+            curso=curso,
+            estudiante_id=estudiante_id
+        )
+
+        if not creada:
+            return Response(
+                {"error": "ya inscrito"},
+                status=status.HTTP_409_CONFLICT
+            )
+
+        return Response(
+            {"mensaje": "inscripción correcta"},
+            status=status.HTTP_201_CREATED
+        )
+```
+
+### 5.3. Qué está pasando realmente (explicación teórica)
+
+* `@action(detail=True, methods=['post'])`:
+
+  * DRF añade una ruta extra colgada del curso.
+* `curso = self.get_object()`:
+
+  * DRF usa el `pk` de la URL y el `queryset` para obtener el `Curso`.
+  * Si no existe, DRF responde automáticamente con `404 Not Found`.
+* `request.data`:
+
+  * En DRF, contiene el cuerpo parseado (JSON/form-data).
+* `get_or_create(...)`:
+
+  * Busca si existe una inscripción con esos campos.
+  * Si no existe, la crea.
+  * Devuelve `(objeto, True/False)`.
+
+### 5.4. Por qué 409 en “ya inscrito”
+
+`409 Conflict` es un código muy usado cuando el estado del recurso **entra en conflicto** con la operación:
+
+* La operación “inscribirse” no tiene sentido si ya estabas inscrito.
+
+---
+
+## 6. Uso de serializadores de entrada (recomendado)
+
+La versión anterior funciona, pero cuando la entrada se complica, el código se ensucia.
+
+La solución limpia es usar un `Serializer` simple para validar.
+
+### 6.1. Crear el serializer de entrada
+
+En `tuapp/serializers.py`:
+
+```python
+from rest_framework import serializers
+
 class InscribirseSerializer(serializers.Serializer):
     estudiante_id = serializers.IntegerField()
 ```
 
-Ventajas:
+**Qué consigues con esto:**
 
-* Validación automática
-* Código más limpio
-* Errores coherentes
+* Validación automática de tipo (int).
+* Mensajes de error estándar.
+* Campo obligatorio por defecto.
+* Código más mantenible.
 
----
+### 6.2. Usarlo dentro de la acción
 
-## 6. Acciones de colección
+En `views.py`:
 
 ```python
-@action(detail=False, methods=['get'])
-def destacados(self, request):
-    cursos = Curso.objects.filter(activo=True)
-    serializer = self.get_serializer(cursos, many=True)
-    return Response(serializer.data)
+from rest_framework import status
+from rest_framework.decorators import action
+from rest_framework.response import Response
+
+from .models import Inscripcion
+from .serializers import InscribirseSerializer
+
+class CursoViewSet(ModelViewSet):
+    ...
+
+    @action(detail=True, methods=['post'])
+    def inscribirse(self, request, pk=None):
+        curso = self.get_object()
+
+        serializer = InscribirseSerializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+
+        estudiante_id = serializer.validated_data['estudiante_id']
+
+        inscripcion, creada = Inscripcion.objects.get_or_create(
+            curso=curso,
+            estudiante_id=estudiante_id
+        )
+
+        if not creada:
+            return Response(
+                {"error": "ya inscrito"},
+                status=status.HTTP_409_CONFLICT
+            )
+
+        return Response(
+            {"mensaje": "inscripción correcta"},
+            status=status.HTTP_201_CREATED
+        )
 ```
 
----
+### 6.3. Qué hace `is_valid(raise_exception=True)`
 
-## 7. Práctica 
+* Si es inválido, DRF lanza una excepción controlada.
+* DRF responde automáticamente con:
 
-Cada alumno debe:
-
-1. Implementar al menos **una acción de negocio**
-2. Usar `@action` correctamente
-3. Controlar errores
-4. Usar un serializer de entrada si recibe datos complejos
-
-Entregar:
-
-* ViewSet con la acción
-* Serializer de entrada
-* Evidencias según el anexo
+  * `400 Bad Request`
+  * Un JSON con los errores por campo (formato estándar).
+* Evitas escribir `if not estudiante_id: ...` para cada campo.
 
 ---
+
+## 7. Acciones de colección (detail=False)
+
+Son útiles para:
+
+* Listados especiales (destacados, recientes, más valorados…)
+* Estadísticas agregadas
+* Búsquedas avanzadas si no quieres meterlo todo en filtros
+
+Ejemplo:
+
+```python
+from rest_framework.decorators import action
+from rest_framework.response import Response
+
+class CursoViewSet(ModelViewSet):
+    queryset = Curso.objects.all()
+    serializer_class = CursoSerializer
+
+    @action(detail=False, methods=['get'])
+    def destacados(self, request):
+        cursos = Curso.objects.filter(activo=True)
+        serializer = self.get_serializer(cursos, many=True)
+        return Response(serializer.data)
+```
+
+### 7.1. Por qué `self.get_serializer(...)`
+
+* Respeta el serializer configurado para el viewset.
+* Mantiene consistencia con el resto del API.
+* Te permite cambiar el serializer globalmente sin tocar esta acción.
+
+---
+
+## 8. Rutas resultantes y cómo probar
+
+Suponiendo que tienes el router registrando el viewset así:
+
+```python
+router.register(r'cursos', CursoViewSet)
+```
+
+Entonces:
+
+### 8.1. Acción por objeto
+
+* **POST** `/cursos/5/inscribirse/`
+  Body JSON:
+
+```json
+{ "estudiante_id": 12 }
+```
+
+Respuestas típicas:
+
+* `201` → inscripción correcta
+* `400` → campo inválido o faltante
+* `404` → curso no existe
+* `409` → ya inscrito
+
+### 8.2. Acción de colección
+
+* **GET** `/cursos/destacados/`
+  Responde lista de cursos filtrados.
+
+---
+
+## 9. Práctica del bloque (lo que debe hacer cada alumno)
+
+Cada alumno, en su **temática de proyecto**, debe implementar:
+
+### 9.1. Requisitos mínimos
+
+1. **Al menos 1 acción de negocio** (detail=True o detail=False, pero se recomienda detail=True).
+2. Usar `@action` correctamente:
+
+   * Elegir bien `detail=...`
+   * Elegir el método HTTP correcto
+3. Control de errores:
+
+   * 400 para validación
+   * 404 si el objeto no existe (DRF lo hace con `get_object`)
+   * 409 u otro código coherente si la operación no tiene sentido por estado
+4. Si recibe datos “con chicha” (más de un campo o validaciones), usar **serializer de entrada**.
+
+
+
+---
+
+## 10. Ejemplos de acciones por temática 
+
+
+* **Cursos**: `inscribirse`, `cancelar_inscripcion`, `finalizar`, `publicar`
+* **Tienda**: `añadir_al_carrito`, `vaciar_carrito`, `finalizar_compra`
+* **Eventos**: `confirmar_asistencia`, `cancelar_asistencia`
+* **Reservas**: `confirmar`, `anular`, `checkin`
+* **Tareas**: `marcar_completada`, `reabrir`, `asignar_usuario`
