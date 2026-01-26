@@ -396,24 +396,27 @@ Ejemplo: inscribirse en un curso.
 
 ---
 
-## 8. BLOQUE 7 – Autenticación JWT
+# 8. BLOQUE 7 – Autenticación, permisos y control de acceso (Postman)
 
-### 8.1 Obtener token
+## 8.1 Obtener token (login)
 
-1. Carpeta: `05 - Autenticación (JWT)`
-2. **Add Request**
-3. Nombre:
+Carpeta: `05 - Autenticación (JWT)`
 
-   ```
-   POST - login
-   ```
-4. Método: **POST**
-5. URL:
+**Add Request**
 
-   ```
-   {{base_url}}/api/token/
-   ```
-6. Body:
+**Nombre:**
+POST – login (admin)
+
+**Método:**
+POST
+
+**URL:**
+
+```
+{{base_url}}/api/token/
+```
+
+**Body (JSON):**
 
 ```json
 {
@@ -424,35 +427,329 @@ Ejemplo: inscribirse en un curso.
 
 ---
 
-### 8.2 Guardar token automáticamente
+## 8.2 Guardar token automáticamente
 
-En la pestaña **Tests**:
+En la pestaña **Tests** de la request de login, añadir:
 
 ```javascript
 const data = pm.response.json();
 pm.environment.set("token", data.access);
 ```
 
-Pulsa **Send** y comprueba que `token` se rellena.
+Pulsa **Send** y comprueba que la variable de entorno `token` se ha rellenado correctamente.
 
 ---
 
-### 8.3 Usar token en endpoints protegidos
+## 8.3 Usar token en endpoints protegidos
 
-En cualquier request protegida:
+En cualquier request que requiera autenticación:
 
-1. Pestaña **Authorization**
-2. Tipo: **Bearer Token**
-3. Token:
+* Pestaña **Authorization**
+* Type: `Bearer Token`
+* Token:
 
-   ```
-   {{token}}
-   ```
+  ```
+  {{token}}
+  ```
 
-Probar:
+**Comprobación inicial:**
 
-* Con token → OK
-* Sin token → 401
+* Con token → acceso permitido
+* Sin token → `401 Unauthorized`
+
+---
+
+## 8.4 Probar lectura pública de cursos
+
+### Listado de cursos
+
+**Request**
+
+* Método: `GET`
+* URL:
+
+  ```
+  {{base_url}}/api/cursos/
+  ```
+
+**Resultado esperado:**
+
+* Sin token → `200 OK`
+* Con token → `200 OK`
+
+---
+
+### Detalle de un curso
+
+**Request**
+
+* Método: `GET`
+* URL:
+
+  ```
+  {{base_url}}/api/cursos/1/
+  ```
+
+**Resultado esperado:**
+
+* Sin token → `200 OK`
+* Con token → `200 OK`
+
+---
+
+## 8.5 Probar creación de cursos (control de instructor)
+
+### Crear curso como instructor
+
+**Request**
+
+* Método: `POST`
+* URL:
+
+  ```
+  {{base_url}}/api/cursos/
+  ```
+
+**Body (JSON):**
+
+```json
+{
+  "nombre": "Curso de prueba",
+  "descripcion": "Curso creado desde Postman"
+}
+```
+
+**Resultado esperado:**
+
+* Instructor autenticado → `201 Created`
+* El curso queda asociado automáticamente al instructor autenticado
+
+---
+
+### Intentar forzar instructor por body
+
+**Body (JSON):**
+
+```json
+{
+  "nombre": "Curso inválido",
+  "descripcion": "Intento de suplantación",
+  "instructor": 5
+}
+```
+
+**Resultado esperado:**
+
+* El campo `instructor` es ignorado o provoca error
+* El curso no se crea en nombre de otro instructor
+
+---
+
+## 8.6 Probar permisos de modificación de cursos
+
+### Editar curso propio
+
+**Request**
+
+* Método: `PATCH`
+* URL:
+
+  ```
+  {{base_url}}/api/cursos/1/
+  ```
+
+**Body (JSON):**
+
+```json
+{
+  "descripcion": "Descripción modificada"
+}
+```
+
+**Resultado esperado:**
+
+* Instructor propietario → `200 OK`
+
+---
+
+### Editar curso ajeno
+
+**Resultado esperado:**
+
+* Instructor no propietario → `403 Forbidden`
+
+---
+
+### Borrar curso
+
+**Request**
+
+* Método: `DELETE`
+* URL:
+
+  ```
+  {{base_url}}/api/cursos/1/
+  ```
+
+**Resultado esperado:**
+
+* Instructor propietario o admin → `204 No Content`
+* Instructor no propietario → `403 Forbidden`
+
+---
+
+## 8.7 Probar creación de inscripciones
+
+### Crear inscripción como estudiante
+
+**Request**
+
+* Método: `POST`
+* URL:
+
+  ```
+  {{base_url}}/api/inscripciones/
+  ```
+
+**Body (JSON):**
+
+```json
+{
+  "curso": 1
+}
+```
+
+**Resultado esperado:**
+
+* Estudiante autenticado → `201 Created`
+* La inscripción queda asociada automáticamente al estudiante autenticado
+
+---
+
+### Intentar forzar estudiante por body
+
+**Body (JSON):**
+
+```json
+{
+  "curso": 1,
+  "estudiante": 3
+}
+```
+
+**Resultado esperado:**
+
+* El campo `estudiante` es ignorado o provoca error
+* No se permite crear inscripciones en nombre de otro estudiante
+
+---
+
+## 8.8 Probar visibilidad de inscripciones (`get_queryset`)
+
+### Estudiante autenticado
+
+**Request**
+
+* Método: `GET`
+* URL:
+
+  ```
+  {{base_url}}/api/inscripciones/
+  ```
+
+**Resultado esperado:**
+
+* El estudiante solo ve **sus propias inscripciones**
+
+---
+
+### Instructor autenticado
+
+**Resultado esperado:**
+
+* El instructor solo ve inscripciones de **sus cursos**
+
+---
+
+### Acceso directo por ID a inscripción ajena
+
+**Request**
+
+* Método: `GET`
+* URL:
+
+  ```
+  {{base_url}}/api/inscripciones/10/
+  ```
+
+**Resultado esperado:**
+
+* `404 Not Found`
+
+---
+
+## 8.9 Probar permisos sobre inscripciones
+
+### Borrar inscripción propia
+
+**Request**
+
+* Método: `DELETE`
+* URL:
+
+  ```
+  {{base_url}}/api/inscripciones/3/
+  ```
+
+**Resultado esperado:**
+
+* Estudiante propietario → `204 No Content`
+
+---
+
+### Borrar inscripción ajena
+
+**Resultado esperado:**
+
+* Estudiante no propietario → `403 Forbidden`
+
+---
+
+## 8.10 Probar acción de negocio `inscribirse`
+
+**Request**
+
+* Método: `POST`
+* URL:
+
+  ```
+  {{base_url}}/api/cursos/1/inscribirse/
+  ```
+
+**Body:**
+
+```json
+{}
+```
+
+**Resultados esperados:**
+
+* Estudiante autenticado → `201 Created`
+* Usuario no estudiante → `403 Forbidden`
+* Inscripción duplicada → `409 Conflict`
+
+---
+
+## 8.11 Comprobaciones finales
+
+El alumno debe poder demostrar en Postman que:
+
+* Sin token → `401 Unauthorized`
+* La lectura de cursos es pública
+* Solo el instructor propietario puede modificar o borrar un curso
+* Un estudiante solo ve y gestiona sus inscripciones
+* No se aceptan `instructor` ni `estudiante` por body
+* El admin puede acceder a todos los recursos
 
 ---
 
