@@ -141,13 +141,6 @@ No se crean nuevas apps ni modelos.
 
 **Archivo:** `config/settings.py`
 
-```python
-INSTALLED_APPS = [
-    ...
-    'rest_framework',
-]
-```
-
 Configurar autenticación JWT:
 
 ```python
