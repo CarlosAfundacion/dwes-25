@@ -230,7 +230,7 @@ User.objects.create_user(
 )
 ```
 
-Estos usuarios son los que se autenticarán para operar con la API.
+Estos usuarios son los que se autenticarán para operar con la API. Lo reomendable es crearlos a través de `admin`
 
 ---
 
