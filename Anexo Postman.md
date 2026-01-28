@@ -397,26 +397,49 @@ Ejemplo: inscribirse en un curso.
 ---
 
 # 8. BLOQUE 7 – Autenticación, permisos y control de acceso (Postman)
+---
 
-## 8.1 Obtener token (login)
+## 8.1 Objetivo de este bloque
 
-Carpeta: `05 - Autenticación (JWT)`
+En este bloque vamos a comprobar **únicamente lo que se ha explicado en clase sobre JWT**:
 
-**Add Request**
+* Obtener un token con usuario y contraseña.
+* Guardar el token en Postman.
+* Usar el token en peticiones protegidas.
+* Ver claramente la diferencia entre:
 
-**Nombre:**
-POST – login (admin)
+  * endpoints públicos
+  * endpoints protegidos
+* Entender los errores `401` y `403`.
 
-**Método:**
+---
+
+## 8.2 Obtener token JWT (login)
+
+Carpeta:
+`05 - Autenticación (JWT)`
+
+### Request: Login
+
+**Nombre**
+
+```
+POST - login (obtener token)
+```
+
+**Método**
+
+```
 POST
+```
 
-**URL:**
+**URL**
 
 ```
 {{base_url}}/api/token/
 ```
 
-**Body (JSON):**
+**Body → raw → JSON**
 
 ```json
 {
@@ -425,333 +448,231 @@ POST
 }
 ```
 
+*(Usa un usuario real creado previamente)*
+
 ---
 
-## 8.2 Guardar token automáticamente
+### Resultado esperado
 
-En la pestaña **Tests** de la request de login, añadir:
+* Status: `200 OK`
+* Body contiene:
+
+```json
+{
+  "refresh": "xxxxx",
+  "access": "yyyyy"
+}
+```
+
+ **El token importante para las peticiones es `access`.**
+
+---
+
+## 8.3 Guardar el token automáticamente en Postman
+
+Para no copiar el token a mano en cada petición:
+
+1. Abre la pestaña **Scripts** de la request de login.
+2. Añade este código:
 
 ```javascript
 const data = pm.response.json();
 pm.environment.set("token", data.access);
 ```
 
-Pulsa **Send** y comprueba que la variable de entorno `token` se ha rellenado correctamente.
+3. Pulsa **Send**.
+
+Comprueba en el entorno **Local Django** que la variable:
+
+```
+token
+```
+
+ya tiene valor.
 
 ---
 
-## 8.3 Usar token en endpoints protegidos
+## 8.4 Probar un endpoint protegido SIN token
 
-En cualquier request que requiera autenticación:
-
-* Pestaña **Authorization**
-* Type: `Bearer Token`
-* Token:
-
-  ```
-  {{token}}
-  ```
-
-**Comprobación inicial:**
-
-* Con token → acceso permitido
-* Sin token → `401 Unauthorized`
-
----
-
-## 8.4 Probar lectura pública de cursos
-
-### Listado de cursos
-
-**Request**
-
-* Método: `GET`
-* URL:
-
-  ```
-  {{base_url}}/api/cursos/
-  ```
-
-**Resultado esperado:**
-
-* Sin token → `200 OK`
-* Con token → `200 OK`
-
----
-
-### Detalle de un curso
-
-**Request**
-
-* Método: `GET`
-* URL:
-
-  ```
-  {{base_url}}/api/cursos/1/
-  ```
-
-**Resultado esperado:**
-
-* Sin token → `200 OK`
-* Con token → `200 OK`
-
----
-
-## 8.5 Probar creación de cursos (control de instructor)
-
-### Crear curso como instructor
+### Ejemplo: crear curso sin autenticación
 
 **Request**
 
 * Método: `POST`
 * URL:
 
-  ```
-  {{base_url}}/api/cursos/
-  ```
-
-**Body (JSON):**
-
-```json
-{
-  "nombre": "Curso de prueba",
-  "descripcion": "Curso creado desde Postman"
-}
+```
+{{api_url}}/cursos/
 ```
 
-**Resultado esperado:**
+* Body válido en JSON
 
-* Instructor autenticado → `201 Created`
-* El curso queda asociado automáticamente al instructor autenticado
+**NO pongas token**
 
 ---
 
-### Intentar forzar instructor por body
+### Resultado esperado
 
-**Body (JSON):**
+* Status: `401 Unauthorized`
 
-```json
-{
-  "nombre": "Curso inválido",
-  "descripcion": "Intento de suplantación",
-  "instructor": 5
-}
+ Esto demuestra que **la API está protegida**.
+
+---
+
+## 8.5 Usar el token en un endpoint protegido
+
+### Cómo enviar el token
+
+En cualquier request protegida:
+
+1. Pestaña **Authorization**
+2. Type: `Bearer Token`
+3. Token:
+
+```
+{{token}}
 ```
 
-**Resultado esperado:**
+---
 
-* El campo `instructor` es ignorado o provoca error
-* El curso no se crea en nombre de otro instructor
+### Repetir la creación de curso
+
+Misma request que antes, ahora **con token**.
 
 ---
 
-## 8.6 Probar permisos de modificación de cursos
+### Resultado esperado
 
-### Editar curso propio
+* Status: `201 Created`
+* El recurso se crea correctamente.
 
-**Request**
+ **Conclusión clara para el alumno**:
 
-* Método: `PATCH`
-* URL:
-
-  ```
-  {{base_url}}/api/cursos/1/
-  ```
-
-**Body (JSON):**
-
-```json
-{
-  "descripcion": "Descripción modificada"
-}
-```
-
-**Resultado esperado:**
-
-* Instructor propietario → `200 OK`
+> *Sin token no puedo escribir, con token sí.*
 
 ---
 
-### Editar curso ajeno
+## 8.6 Comprobar endpoints públicos
 
-**Resultado esperado:**
+Según los apuntes:
 
-* Instructor no propietario → `403 Forbidden`
+* `list`
+* `retrieve`
 
----
-
-### Borrar curso
-
-**Request**
-
-* Método: `DELETE`
-* URL:
-
-  ```
-  {{base_url}}/api/cursos/1/
-  ```
-
-**Resultado esperado:**
-
-* Instructor propietario o admin → `204 No Content`
-* Instructor no propietario → `403 Forbidden`
+son públicos.
 
 ---
 
-## 8.7 Probar creación de inscripciones
-
-### Crear inscripción como estudiante
-
-**Request**
-
-* Método: `POST`
-* URL:
-
-  ```
-  {{base_url}}/api/inscripciones/
-  ```
-
-**Body (JSON):**
-
-```json
-{
-  "curso": 1
-}
-```
-
-**Resultado esperado:**
-
-* Estudiante autenticado → `201 Created`
-* La inscripción queda asociada automáticamente al estudiante autenticado
-
----
-
-### Intentar forzar estudiante por body
-
-**Body (JSON):**
-
-```json
-{
-  "curso": 1,
-  "estudiante": 3
-}
-```
-
-**Resultado esperado:**
-
-* El campo `estudiante` es ignorado o provoca error
-* No se permite crear inscripciones en nombre de otro estudiante
-
----
-
-## 8.8 Probar visibilidad de inscripciones (`get_queryset`)
-
-### Estudiante autenticado
+### Listar cursos SIN token
 
 **Request**
 
 * Método: `GET`
 * URL:
 
-  ```
-  {{base_url}}/api/inscripciones/
-  ```
+```
+{{api_url}}/cursos/
+```
 
-**Resultado esperado:**
+**Resultado esperado**
 
-* El estudiante solo ve **sus propias inscripciones**
-
----
-
-### Instructor autenticado
-
-**Resultado esperado:**
-
-* El instructor solo ve inscripciones de **sus cursos**
+* `200 OK`
+* Devuelve lista de cursos
 
 ---
 
-### Acceso directo por ID a inscripción ajena
+### Detalle de curso SIN token
 
 **Request**
 
 * Método: `GET`
 * URL:
 
-  ```
-  {{base_url}}/api/inscripciones/10/
-  ```
+```
+{{api_url}}/cursos/1/
+```
 
-**Resultado esperado:**
+**Resultado esperado**
 
-* `404 Not Found`
+* `200 OK`
 
----
-
-## 8.9 Probar permisos sobre inscripciones
-
-### Borrar inscripción propia
-
-**Request**
-
-* Método: `DELETE`
-* URL:
-
-  ```
-  {{base_url}}/api/inscripciones/3/
-  ```
-
-**Resultado esperado:**
-
-* Estudiante propietario → `204 No Content`
+ Esto confirma que **no todo está protegido**, solo lo sensible.
 
 ---
 
-### Borrar inscripción ajena
+## 8.7 Probar una acción de negocio protegida
 
-**Resultado esperado:**
-
-* Estudiante no propietario → `403 Forbidden`
+Ejemplo: `inscribirse`
 
 ---
 
-## 8.10 Probar acción de negocio `inscribirse`
+### Inscribirse SIN token
 
 **Request**
 
 * Método: `POST`
 * URL:
 
-  ```
-  {{base_url}}/api/cursos/1/inscribirse/
-  ```
-
-**Body:**
-
-```json
-{}
+```
+{{api_url}}/cursos/1/inscribirse/
 ```
 
-**Resultados esperados:**
+**Resultado esperado**
 
-* Estudiante autenticado → `201 Created`
-* Usuario no estudiante → `403 Forbidden`
-* Inscripción duplicada → `409 Conflict`
+* `401 Unauthorized`
 
 ---
 
-## 8.11 Comprobaciones finales
+### Inscribirse CON token
 
-El alumno debe poder demostrar en Postman que:
-
-* Sin token → `401 Unauthorized`
-* La lectura de cursos es pública
-* Solo el instructor propietario puede modificar o borrar un curso
-* Un estudiante solo ve y gestiona sus inscripciones
-* No se aceptan `instructor` ni `estudiante` por body
-* El admin puede acceder a todos los recursos
+Misma request, ahora con **Authorization → Bearer {{token}}**
 
 ---
+
+### Resultado esperado
+
+* `201 Created`
+* Mensaje de éxito
+
+ Se refuerza la idea clave:
+
+> **Las acciones de negocio siempre van protegidas.**
+
+---
+
+## 8.8 Errores HTTP importantes 
+
+El alumno debe ser capaz de provocar y explicar:
+
+### `401 Unauthorized`
+
+* No enviar token
+* Token inválido
+* Token expirado
+
+---
+
+### `403 Forbidden`
+
+* Usuario autenticado
+* Endpoint protegido por permisos
+* No autorizado para esa acción
+
+---
+
+## 8.9 Resumen visual del comportamiento esperado
+
+| Endpoint                    | Token | Resultado |
+| --------------------------- | ----- | --------- |
+| GET /cursos/                | No    | 200 OK    |
+| GET /cursos/1/              | No    | 200 OK    |
+| POST /cursos/               | No    | 401       |
+| POST /cursos/               | Sí    | 201       |
+| POST /cursos/1/inscribirse/ | No    | 401       |
+| POST /cursos/1/inscribirse/ | Sí    | 201       |
+
+---
+
 
 ## 9. BLOQUE 8 – Flujo profesional completo
 
